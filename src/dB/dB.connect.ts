@@ -10,7 +10,7 @@ const connectDB = async (): Promise<void> => {
     }
 
     const connect = await mongoose.connect(
-      `${process.env.MONGODB_URL}/TheProgressTrackerType`
+      `${process.env.MONGODB_URL}`
     );
 
     console.log(
