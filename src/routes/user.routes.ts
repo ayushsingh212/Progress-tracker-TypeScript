@@ -3,6 +3,7 @@ import {
   changeCurrentPassword,
   getCurrentUser,
   loginUser,
+  logoutUser,
   refreshAccessToken,
   registerUser,
   updateDetails,
@@ -14,6 +15,7 @@ const router = Router();
 // Public routes
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/logout",verifyJWT,logoutUser)
 router.get("/refreshToken", refreshAccessToken);
 
 // Protected routes (require authentication)
