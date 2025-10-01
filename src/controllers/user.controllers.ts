@@ -4,8 +4,7 @@ import { User, IUser } from "../models/user.model";
 import { ApiResponse } from "../utils/ApiResponse";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
-import jwt, { JwtPayload } from "jsonwebtoken";
-
+import jwt, { JwtPayload, TokenExpiredError } from "jsonwebtoken";
 declare module "express-serve-static-core" {
   interface Request {
     user?: IUser;
@@ -98,12 +97,12 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
   if (!passwordCorrect) {
     throw new ApiError(401, "Incorrect password! Please try again");
   }
-   
+
   const { refreshToken, accessToken } = await generateAccessAndRefreshToken(
     (user._id as string).toString()
   );
-  
-    const safeUser = user.toObject();
+
+  const safeUser = user.toObject();
   delete (safeUser as any).password;
   delete (safeUser as any).refreshToken;
 
@@ -118,7 +117,7 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?._id;
   if (!userId) throw new ApiError(401, "User not authenticated");
 
-  await User.findByIdAndUpdate(userId, { refreshToken: undefined });
+ 
 
   return res
     .status(202)
@@ -127,7 +126,12 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
-// Refresh access token
+
+
+interface DecodedToken extends JwtPayload {
+  _id: string;
+}
+
 const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken;
   if (!token) throw new ApiError(400, "Refresh token missing");
@@ -138,30 +142,33 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
       token,
       process.env.REFRESH_TOKEN_SECRET as string
     ) as DecodedToken;
-  } catch (err: any) {
-    if (err.name === "TokenExpiredError") {
-      throw new ApiError(401, "Refresh token expired");
+  } catch (err: unknown) {
+    if (err instanceof TokenExpiredError) {
+      throw new ApiError(401, "Refresh token expired, please login again");
     }
     throw new ApiError(401, "Invalid refresh token");
   }
 
-  const user = await User.findById(decoded._id);
-  if (!user) throw new ApiError(404, "User not found");
+ 
+  const accessToken = jwt.sign(
+    { _id: decoded._id },
+    process.env.ACCESS_TOKEN_SECRET as string,
+    { expiresIn: "15m" }
+  );
 
-  if (user.refreshToken !== token) {
-    throw new ApiError(403, "Refresh token mismatch");
-  }
-
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    (user._id as string).toString()
+  const newRefreshToken = jwt.sign(
+    { _id: decoded._id },
+    process.env.REFRESH_TOKEN_SECRET as string,
+    { expiresIn: "7d" }
   );
 
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(new ApiResponse(200, {}, "Token refreshed"));
+    .cookie("refreshToken", newRefreshToken, options)
+    .json(new ApiResponse(200, { }, "Token refreshed successfully"));
 });
+
 
 const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?._id;
