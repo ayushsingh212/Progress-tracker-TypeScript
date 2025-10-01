@@ -71,7 +71,6 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(201, userSafe, "User registered successfully"));
 });
 
-// Login user
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body as { email: string; password: string };
 
@@ -79,11 +78,18 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, "Invalid email format");
   }
 
-  if (!password || password.trim() === "") {
-    throw new ApiError(400, "The password is a necessary field");
+  if (
+    !/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+      password
+    )
+  ) {
+    throw new ApiError(
+      401,
+      "Password is incorrect"
+    );
   }
 
-  const user = await User.findOne({ email });
+  let user = await User.findOne({ email }).select("-refreshToken");
   if (!user) {
     throw new ApiError(400, "The user does not exist, please register first");
   }
@@ -92,23 +98,22 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
   if (!passwordCorrect) {
     throw new ApiError(401, "Incorrect password! Please try again");
   }
-
+   
   const { refreshToken, accessToken } = await generateAccessAndRefreshToken(
-    (user._id as string ).toString()
+    (user._id as string).toString()
   );
-
-  const userSafe = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
+  
+    const safeUser = user.toObject();
+  delete (safeUser as any).password;
+  delete (safeUser as any).refreshToken;
 
   return res
     .status(200)
     .cookie("refreshToken", refreshToken, options)
     .cookie("accessToken", accessToken, options)
-    .json(new ApiResponse(200, userSafe, "Login successful"));
+    .json(new ApiResponse(200, safeUser, "Login successful"));
 });
 
-// Logout user
 const logoutUser = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?._id;
   if (!userId) throw new ApiError(401, "User not authenticated");
