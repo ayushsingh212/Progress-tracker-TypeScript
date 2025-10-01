@@ -1,7 +1,7 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export enum TaskStatus {
-  STARTED = "started",
+  STARTED = "todo",
   IN_PROGRESS = "in-progress",
   COMPLETED = "completed",
 }

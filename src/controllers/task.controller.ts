@@ -44,7 +44,7 @@ const updateTask = asyncHandler(async (req: Request, res: Response) => {
   };
 
   if (!newTaskName && !newTaskDetails && !dueDate) {
-    throw new ApiError(200, "There is nothing to update");
+    throw new ApiError(400, "There is nothing to update");
   }
 
 
