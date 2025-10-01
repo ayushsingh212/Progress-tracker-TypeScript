@@ -15,16 +15,18 @@ const createTask = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?._id;
   if (!userId) throw new ApiError(400, "Login first to create the task");
    console.log("Hello I am working");
-  const { taskName, taskDetails } = req.body as {
+  const { taskName, taskDetails,dueDate } = req.body as {
     taskName: string;
     taskDetails: string;
+    dueDate:Date
   };
+  
 
   if ([taskName, taskDetails].some((field) => !field || field.trim() === "")) {
     throw new ApiError(400, "Please provide all the fields");
   }
 
-  const task = await Task.create({ userId, taskName, taskDetails });
+  const task = await Task.create({ userId, taskName, taskDetails,dueDate });
 
   return res
     .status(202)
@@ -35,14 +37,16 @@ const updateTask = asyncHandler(async (req: Request, res: Response) => {
   const taskId = req.params.taskId;
   if (!taskId) throw new ApiError(400, "Task Id is required");
 
-  const { newTaskName, newTaskDetails } = req.body as {
+  const { newTaskName, newTaskDetails,dueDate } = req.body as {
     newTaskName?: string;
     newTaskDetails?: string;
+    dueDate?:Date
   };
 
-  if (!newTaskName && !newTaskDetails) {
+  if (!newTaskName && !newTaskDetails && !dueDate) {
     throw new ApiError(200, "There is nothing to update");
   }
+
 
   const task = await Task.findByIdAndUpdate(
     taskId,
@@ -50,6 +54,7 @@ const updateTask = asyncHandler(async (req: Request, res: Response) => {
       $set: {
         taskName: newTaskName,
         taskDetails: newTaskDetails,
+        dueDate
       },
     },
     { new: true, runValidators: true }
@@ -103,4 +108,29 @@ const getTaskStatus = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-export { createTask, updateTask, updateTaskStatus, getTaskStatus };
+const deleteTask = asyncHandler(async(req:Request,res:Response)=>{
+
+  const {taskId} = req.params;
+
+
+  const task = await Task.findByIdAndDelete(taskId);
+
+
+
+  if(!task)
+  {
+    throw new ApiError(400,"Task does not exist")
+  }
+
+
+ return res.status(202)
+ .json(
+  new ApiResponse(202,{},"Task deleted successfully")
+ )
+
+
+
+})
+
+
+export { createTask, updateTask, updateTaskStatus, getTaskStatus,deleteTask };

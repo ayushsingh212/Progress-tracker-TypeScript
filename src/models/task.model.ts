@@ -1,5 +1,4 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
-import { IUser } from "./user.model"; 
 
 export enum TaskStatus {
   STARTED = "started",
@@ -8,14 +7,14 @@ export enum TaskStatus {
 }
 
 export interface ITask extends Document {
-  userId: IUser["_id"]; 
+  userId: mongoose.Types.ObjectId;  
   taskName: string;
   taskDetails: string;
   taskStatus: TaskStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  dueDate: Date;
+  createdAt: Date;  
+  updatedAt: Date;  
 }
-
 
 const taskSchema = new Schema<ITask>(
   {
@@ -34,6 +33,10 @@ const taskSchema = new Schema<ITask>(
       type: String,
       required: [true, "Task details is required to let you know what to do!"],
     },
+    dueDate: {
+      type: Date,
+      default: Date.now, 
+    },
     taskStatus: {
       type: String,
       enum: Object.values(TaskStatus),
@@ -44,6 +47,5 @@ const taskSchema = new Schema<ITask>(
     timestamps: true,
   }
 );
-
 
 export const Task: Model<ITask> = mongoose.model<ITask>("Task", taskSchema);

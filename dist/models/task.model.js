@@ -57,6 +57,10 @@ const taskSchema = new mongoose_1.Schema({
         type: String,
         required: [true, "Task details is required to let you know what to do!"],
     },
+    dueDate: {
+        type: Date,
+        default: Date.now,
+    },
     taskStatus: {
         type: String,
         enum: Object.values(TaskStatus),
