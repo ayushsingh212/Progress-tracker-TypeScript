@@ -14,7 +14,7 @@ declare module "express-serve-static-core" {
 const createTask = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?._id;
   if (!userId) throw new ApiError(400, "Login first to create the task");
-
+   console.log("Hello I am working");
   const { taskName, taskDetails } = req.body as {
     taskName: string;
     taskDetails: string;

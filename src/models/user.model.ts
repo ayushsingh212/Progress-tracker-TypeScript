@@ -1,5 +1,7 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
-import jwt from "jsonwebtoken";
+import jwt, { Secret, SignOptions } from "jsonwebtoken";
+
+
 import bcrypt from "bcrypt";
 
 export interface IUser extends Document {
@@ -59,15 +61,19 @@ userSchema.methods.generateAccessToken = function (): string {
     throw new Error("Access token env variables not set");
   }
 
-  return jwt.sign(
-    {
-      _id: this._id.toString(),
-      email: this.email,
-      fullName: this.fullName,
-    },
-    process.env.ACCESS_TOKEN_SECRET as string,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY as string }
-  );
+const accessTokenSecret: Secret = process.env.ACCESS_TOKEN_SECRET!;
+const accessTokenExpiry: SignOptions = { expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRY)
+ };
+
+return jwt.sign(
+  {
+    _id: this._id.toString(),
+    email: this.email,
+    fullName: this.fullName,
+  },
+  accessTokenSecret,
+  accessTokenExpiry
+);
 };
 
 userSchema.methods.generateRefreshToken = function (): string {
@@ -75,11 +81,13 @@ userSchema.methods.generateRefreshToken = function (): string {
     throw new Error("Refresh token env variables not set");
   }
 
+  const refreshTokenSecret: Secret = process.env.REFRESH_TOKEN_SECRET!;
+  const refreshTokenExpiry: SignOptions = { expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRY)  };
+
   return jwt.sign(
     { _id: this._id.toString() },
-    process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+    refreshTokenSecret,
+    refreshTokenExpiry
   );
 };
-
 export const User: Model<IUser> = mongoose.model<IUser>("User", userSchema);

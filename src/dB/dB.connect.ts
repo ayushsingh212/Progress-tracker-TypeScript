@@ -1,9 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-dotenv.config({
-  path: "../../.env",
-});
+dotenv.config()
 
 const connectDB = async (): Promise<void> => {
   try {
@@ -12,7 +10,7 @@ const connectDB = async (): Promise<void> => {
     }
 
     const connect = await mongoose.connect(
-      `${process.env.MONGODB_URL}/TheProgressTracker`
+      `${process.env.MONGODB_URL}/TheProgressTrackerType`
     );
 
     console.log(
