@@ -3,6 +3,7 @@ import { verifyJWT } from "../middlewares/auth.middlewares";
 import {
   createTask,
   deleteTask,
+  getAllTasks,
   getTaskStatus,
   updateTask,
   updateTaskStatus,
@@ -18,4 +19,5 @@ router.put("/updateTask/:taskId", verifyOwner, updateTask);
 router.patch("/updateTaskStatus/:taskId",verifyOwner ,updateTaskStatus);
 router.get("/getTaskStatus/:taskId",verifyOwner, getTaskStatus);
 router.delete("/deleteTask/:taskId",verifyOwner,deleteTask)
+router.get("/getAllTasks",getAllTasks);
 export default router;

@@ -131,6 +131,14 @@ const deleteTask = asyncHandler(async(req:Request,res:Response)=>{
 
 
 })
+const getAllTasks = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?._id;
+  if (!userId) throw new ApiError(400, "Login first to get the tasks");
+  const tasks = await Task.find({ userId }).lean<ITask[]>();
 
+  return res
+    .status(200)
+    .json(new ApiResponse<ITask[]>(200, tasks, "Tasks fetched successfully"));
+});
 
-export { createTask, updateTask, updateTaskStatus, getTaskStatus,deleteTask };
+export { createTask, updateTask, updateTaskStatus, getTaskStatus,deleteTask,getAllTasks };
